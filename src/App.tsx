@@ -110,10 +110,20 @@ export default function Page() {
 
   /* Filtro de placa na tabela */
   const [placaFiltro, setPlacaFiltro] = useState("");
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [itensPorPagina, setItensPorPagina] = useState<5 | 10>(5);
+
   const veiculosFiltrados = useMemo(() => {
     if (!placaFiltro) return veiculos;
     return veiculos.filter((v: any) => (v.placa ?? "").toLowerCase().includes(placaFiltro.toLowerCase()));
   }, [veiculos, placaFiltro]);
+
+  const totalPaginas = Math.max(1, Math.ceil(veiculosFiltrados.length / itensPorPagina));
+
+  const veiculosPaginados = useMemo(() => {
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    return veiculosFiltrados.slice(inicio, inicio + itensPorPagina);
+  }, [veiculosFiltrados, paginaAtual, itensPorPagina]);
 
   // Garante que idVeiculo é sempre string e inicializa com o primeiro veículo ao carregar
   useEffect(() => {
@@ -486,7 +496,18 @@ export default function Page() {
                 {/* Busca por placa */}
                 <div className="table-placa-search">
                   <label>Placa:</label>
-                  <input className="table-placa-input" placeholder="Filtrar por placa" value={placaFiltro} onChange={e => setPlacaFiltro(e.target.value)} />
+                  <input className="table-placa-input" placeholder="Filtrar por placa" value={placaFiltro} onChange={e => { setPlacaFiltro(e.target.value); setPaginaAtual(1); }} />
+                  <label style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-2)" }}>
+                    Exibir:
+                    <select
+                      value={itensPorPagina}
+                      onChange={e => { setItensPorPagina(Number(e.target.value) as 5 | 10); setPaginaAtual(1); }}
+                      style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 13, background: "var(--surface-2)", color: "var(--text-1)" }}
+                    >
+                      <option value={5}>5 por página</option>
+                      <option value={10}>10 por página</option>
+                    </select>
+                  </label>
                 </div>
 
                 {/* Tabela de veículos */}
@@ -504,10 +525,10 @@ export default function Page() {
                       </tr>
                     </thead>
                     <tbody>
-                      {veiculosFiltrados.length === 0 && (
+                      {veiculosPaginados.length === 0 && (
                         <tr><td colSpan={7} style={{ color: "var(--text-3)", padding: "18px" }}>Nenhum veículo encontrado.</td></tr>
                       )}
-                      {veiculosFiltrados.map((v: any, i: number) => {
+                      {veiculosPaginados.map((v: any, i: number) => {
                         const vid = String(v.id_veiculo_mapsis ?? i);
                         const sel = idVeiculo === vid || (!idVeiculo && i === 0);
                         return (
@@ -527,10 +548,12 @@ export default function Page() {
                 </div>
 
                 <div className="table-pagination">
-                  <span>1 de 1</span>
-                  <button className="page-btn" disabled>Anterior</button>
-                  <button className="page-btn active">1</button>
-                  <button className="page-btn" disabled>Próximo</button>
+                  <span>{veiculosFiltrados.length === 0 ? "0" : `${(paginaAtual - 1) * itensPorPagina + 1}–${Math.min(paginaAtual * itensPorPagina, veiculosFiltrados.length)}`} de {veiculosFiltrados.length}</span>
+                  <button className="page-btn" disabled={paginaAtual === 1} onClick={() => setPaginaAtual(p => p - 1)}>Anterior</button>
+                  {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(p => (
+                    <button key={p} className={`page-btn${paginaAtual === p ? " active" : ""}`} onClick={() => setPaginaAtual(p)}>{p}</button>
+                  ))}
+                  <button className="page-btn" disabled={paginaAtual === totalPaginas} onClick={() => setPaginaAtual(p => p + 1)}>Próximo</button>
                 </div>
 
                 <p className="notice-text">
