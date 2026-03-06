@@ -1,0 +1,19 @@
+{
+  "name": "Nova Chevrolet: Agendamento",
+  "short_name": "Oficina",
+  "description": "Agende seu atendimento na oficina com rapidez e segurança.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F8FC",
+  "theme_color": "#0057FF",
+  "orientation": "portrait-primary",
+  "icons": [
+{
+  "src": "/icons/lojachevroletnova-favicon.ico",
+  "sizes": "any",
+  "type": "image/x-icon"
+}
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "pt-BR"
+}
