@@ -370,7 +370,7 @@ export default function Page() {
                   hint="Se ainda não for cliente, abriremos o cadastro automaticamente."
                 />
                 <Button className="btn-full" loading={loading} onClick={() => run(handleValidarDoc)}>
-                  {loading ? "Verificando..." : <>Continuar <Icons.ChevronRight /></>}
+                  {loading ? "Consultando cadastro..." : <>Continuar <Icons.ChevronRight /></>}
                 </Button>
               </CardBody>
             </Card>
@@ -548,12 +548,26 @@ export default function Page() {
                 </div>
 
                 <div className="table-pagination">
-                  <span>{veiculosFiltrados.length === 0 ? "0" : `${(paginaAtual - 1) * itensPorPagina + 1}–${Math.min(paginaAtual * itensPorPagina, veiculosFiltrados.length)}`} de {veiculosFiltrados.length}</span>
-                  <button className="page-btn" disabled={paginaAtual === 1} onClick={() => setPaginaAtual(p => p - 1)}>Anterior</button>
-                  {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(p => (
-                    <button key={p} className={`page-btn${paginaAtual === p ? " active" : ""}`} onClick={() => setPaginaAtual(p)}>{p}</button>
-                  ))}
-                  <button className="page-btn" disabled={paginaAtual === totalPaginas} onClick={() => setPaginaAtual(p => p + 1)}>Próximo</button>
+                  <span className="pagination-info">{veiculosFiltrados.length === 0 ? "0" : `${(paginaAtual - 1) * itensPorPagina + 1}–${Math.min(paginaAtual * itensPorPagina, veiculosFiltrados.length)}`} de {veiculosFiltrados.length}</span>
+                  <button className="page-btn" disabled={paginaAtual === 1} onClick={() => setPaginaAtual(p => p - 1)}>‹ Ant.</button>
+                  {(() => {
+                    const pages: (number | "...")[] = [];
+                    if (totalPaginas <= 7) {
+                      for (let i = 1; i <= totalPaginas; i++) pages.push(i);
+                    } else {
+                      pages.push(1);
+                      if (paginaAtual > 3) pages.push("...");
+                      for (let i = Math.max(2, paginaAtual - 1); i <= Math.min(totalPaginas - 1, paginaAtual + 1); i++) pages.push(i);
+                      if (paginaAtual < totalPaginas - 2) pages.push("...");
+                      pages.push(totalPaginas);
+                    }
+                    return pages.map((p, idx) =>
+                      p === "..."
+                        ? <span key={`e${idx}`} className="page-ellipsis">…</span>
+                        : <button key={p} className={`page-btn${paginaAtual === p ? " active" : ""}`} onClick={() => setPaginaAtual(p as number)}>{p}</button>
+                    );
+                  })()}
+                  <button className="page-btn" disabled={paginaAtual === totalPaginas} onClick={() => setPaginaAtual(p => p + 1)}>Próx. ›</button>
                 </div>
 
                 <p className="notice-text">
