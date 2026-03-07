@@ -412,16 +412,53 @@ button, input, select, textarea { font-family: inherit; }
 .toast-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(0,0,0,.06); }
 .toast-bar { height: 100%; border-radius: 0 2px 2px 0; transition: width .1s linear; }
 
-/* ── FOUND BANNER ── */
-.found-banner {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--green-light); color: #1A5C38;
-  border: 1px solid #9BE0B8; border-radius: var(--r-sm);
-  padding: 10px 14px; font-size: 13px; font-weight: 600;
-  animation: slideUp .25s var(--ease);
+/* ── CONSULTA STATUS ── */
+.consulta-status {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; height: 42px; border-radius: var(--r-sm);
+  padding: 0 20px; font-size: 14px; font-weight: 700;
+  transition: background .3s, color .3s;
 }
-.found-banner svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--green); }
-.btn-found { background: var(--green) !important; box-shadow: 0 2px 8px rgba(60,179,113,.3) !important; pointer-events: none; }
+.consulta-status--consultando {
+  background: var(--brand); color: #fff;
+}
+.consulta-status--encontrado {
+  background: var(--green); color: #fff;
+  animation: pulseGreen .6s var(--ease);
+}
+.consulta-status--carregando {
+  background: var(--green); color: #fff;
+}
+@keyframes pulseGreen {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(60,179,113,.5); }
+  50%  { transform: scale(1.01); box-shadow: 0 0 0 6px rgba(60,179,113,0); }
+  100% { transform: scale(1); }
+}
+.consulta-status svg { width: 18px; height: 18px; flex-shrink: 0; }
+.consulta-texto { flex: 1; }
+.consulta-spinner {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.consulta-progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  background: rgba(0,0,0,.15);
+}
+.consulta-bar {
+  height: 100%; background: rgba(255,255,255,.7); border-radius: 0 2px 2px 0;
+  animation: progressIndeterminate 1.6s ease-in-out infinite;
+}
+.consulta-bar--fast {
+  animation-duration: .9s;
+}
+@keyframes progressIndeterminate {
+  0%   { width: 0%;   margin-left: 0%; }
+  50%  { width: 60%;  margin-left: 20%; }
+  100% { width: 0%;   margin-left: 100%; }
+}
 
 /* ── HORARIOS GRID ── */
 .horarios-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
