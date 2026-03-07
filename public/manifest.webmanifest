@@ -1,6 +1,6 @@
 {
-  "name": "Agendamento Oficina - Chevrolet",
-  "short_name": "Agendamento",
+  "name": "Nova Chevrolet: Agendamento Oficina",
+  "short_name": "Oficina Nova Chevrolet",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b1220",
