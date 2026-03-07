@@ -376,19 +376,32 @@ export default function Page() {
                   onChange={e => docForm.setValue("cpf_cnpj", formatDoc(e.target.value))}
                   hint="Se ainda não for cliente, abriremos o cadastro automaticamente."
                 />
-                <Button
-                  className={`btn-full${loadingStatus === "encontrado" ? " btn-found" : ""}`}
-                  loading={loadingStatus === "consultando" || loadingStatus === "carregando"}
-                  onClick={() => run(handleValidarDoc)}
-                >
-                  {loadingStatus === "consultando" && <>Consultando cadastro...</>}
-                  {loadingStatus === "encontrado"  && <><Icons.CheckCircle /> Cadastro encontrado!</>}
-                  {loadingStatus === "carregando"  && <>Carregando seus dados...</>}
-                  {loadingStatus === "idle"        && <>Continuar <Icons.ChevronRight /></>}
-                </Button>
-                {loadingStatus === "encontrado" && (
-                  <div className="found-banner">
-                    <Icons.CheckCircle /> Cadastro localizado com sucesso. Carregando informações...
+                {loadingStatus === "idle" ? (
+                  <Button className="btn-full" onClick={() => run(handleValidarDoc)}>
+                    Continuar <Icons.ChevronRight />
+                  </Button>
+                ) : (
+                  <div className={`consulta-status consulta-status--${loadingStatus}`}>
+                    {loadingStatus === "consultando" && (
+                      <>
+                        <span className="consulta-spinner" />
+                        <span className="consulta-texto">Consultando cadastro...</span>
+                        <div className="consulta-progress"><div className="consulta-bar" /></div>
+                      </>
+                    )}
+                    {loadingStatus === "encontrado" && (
+                      <>
+                        <Icons.CheckCircle />
+                        <span className="consulta-texto">Cadastro encontrado! Carregando dados...</span>
+                      </>
+                    )}
+                    {loadingStatus === "carregando" && (
+                      <>
+                        <span className="consulta-spinner" />
+                        <span className="consulta-texto">Carregando seus dados...</span>
+                        <div className="consulta-progress"><div className="consulta-bar consulta-bar--fast" /></div>
+                      </>
+                    )}
                   </div>
                 )}
               </CardBody>
