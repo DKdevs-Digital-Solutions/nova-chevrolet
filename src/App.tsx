@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -62,6 +61,7 @@ function parseZodError(err: ZodError) {
 function useInstallPrompt() {
   const [prompt, setPrompt] = useState<any>(null);
   const [installed, setInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   useEffect(() => {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => { });
     const h = (e: any) => { e.preventDefault(); setPrompt(e); };
@@ -75,7 +75,8 @@ function useInstallPrompt() {
     const { outcome } = await prompt.userChoice;
     if (outcome === "accepted") { setPrompt(null); setInstalled(true); }
   };
-  return { canInstall: !!prompt && !installed, install };
+  const dismiss = () => setDismissed(true);
+  return { canInstall: !!prompt && !installed && !dismissed, install, dismiss };
 }
 
 /* ══════════════════════════════════════
@@ -83,7 +84,7 @@ function useInstallPrompt() {
 ══════════════════════════════════════ */
 export default function Page() {
   const toast = useToast();
-  const { canInstall, install } = useInstallPrompt();
+  const { canInstall, install, dismiss } = useInstallPrompt();
 
   const [step, setStep] = useState<StepId>("doc");
   const [clientePayload, setCliente] = useState<any>(null);
@@ -343,6 +344,23 @@ export default function Page() {
       <div className="app-bg" />
       <div className="app-root">
 
+        {/* Install Banner — mobile/tablet only */}
+        {canInstall && (
+          <div className="install-popup">
+            <div className="install-popup-icon">
+              <Icons.Download />
+            </div>
+            <div className="install-popup-text">
+              <span className="install-popup-title">Instalar app</span>
+              <span className="install-popup-sub">Acesse mais rápido pela tela inicial</span>
+            </div>
+            <button className="install-popup-btn" onClick={install}>Instalar</button>
+            <button className="install-popup-close" onClick={dismiss} aria-label="Fechar">
+              <Icons.X />
+            </button>
+          </div>
+        )}
+
         {/* Topbar */}
 <header className="topbar">
   <div className="topbar-brand">
@@ -351,12 +369,6 @@ export default function Page() {
       <span className="topbar-tag">Agendamento Online</span>
     </div>
   </div>
-
-  {canInstall && (
-    <button className="install-banner" onClick={install}>
-      <Icons.Download /> Instalar app
-    </button>
-  )}
 </header>
 
         <main className="app-shell">
