@@ -412,6 +412,17 @@ button, input, select, textarea { font-family: inherit; }
 .toast-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(0,0,0,.06); }
 .toast-bar { height: 100%; border-radius: 0 2px 2px 0; transition: width .1s linear; }
 
+/* ── FOUND BANNER ── */
+.found-banner {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--green-light); color: #1A5C38;
+  border: 1px solid #9BE0B8; border-radius: var(--r-sm);
+  padding: 10px 14px; font-size: 13px; font-weight: 600;
+  animation: slideUp .25s var(--ease);
+}
+.found-banner svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--green); }
+.btn-found { background: var(--green) !important; box-shadow: 0 2px 8px rgba(60,179,113,.3) !important; pointer-events: none; }
+
 /* ── HORARIOS GRID ── */
 .horarios-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .horario-chip {
