@@ -94,6 +94,7 @@ export default function Page() {
   const [horaAgenda, setHoraAgenda] = useState("");
   const [idVeiculo, setIdVeiculo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState<"idle" | "consultando" | "encontrado" | "carregando">("idle");
   const cardRef = useRef<HTMLDivElement>(null);
 
   /* Veículos do cliente — API retorna "veiculos" (plural) */
@@ -195,7 +196,7 @@ export default function Page() {
         else if (msg) toast.error("Algo deu errado", msg);
         else toast.error("Erro inesperado", "Tente novamente em alguns instantes.");
       }
-    } finally { setLoading(false); }
+    } finally { setLoading(false); setLoadingStatus("idle"); }
   }
 
   /* ── Handlers ── */
@@ -206,6 +207,7 @@ export default function Page() {
     }
     const d = cpfCnpjSchema.parse(raw);
     setCpfCnpj(d);
+    setLoadingStatus("consultando");
     const payload = await apiGet(`/api/mapsis/get_cliente?cpf_cnpj=${d}`);
     const err = getErroApi(payload);
     const temCliente = Array.isArray(payload?.cliente) ? payload.cliente.length > 0 : !!payload?.cliente || !!payload?.id_cliente_mapsis;
@@ -214,7 +216,12 @@ export default function Page() {
       toast.info("Novo cadastro", "Cadastro não encontrado. Preencha seus dados para continuar.");
       setStep("cadastro");
     } else {
-      setCliente(payload); setStep("dados_cliente");
+      setLoadingStatus("encontrado");
+      await new Promise(r => setTimeout(r, 900));
+      setLoadingStatus("carregando");
+      setCliente(payload);
+      await new Promise(r => setTimeout(r, 400));
+      setStep("dados_cliente");
     }
   }
 
@@ -369,9 +376,21 @@ export default function Page() {
                   onChange={e => docForm.setValue("cpf_cnpj", formatDoc(e.target.value))}
                   hint="Se ainda não for cliente, abriremos o cadastro automaticamente."
                 />
-                <Button className="btn-full" loading={loading} onClick={() => run(handleValidarDoc)}>
-                  {loading ? "Consultando cadastro..." : <>Continuar <Icons.ChevronRight /></>}
+                <Button
+                  className={`btn-full${loadingStatus === "encontrado" ? " btn-found" : ""}`}
+                  loading={loadingStatus === "consultando" || loadingStatus === "carregando"}
+                  onClick={() => run(handleValidarDoc)}
+                >
+                  {loadingStatus === "consultando" && <>Consultando cadastro...</>}
+                  {loadingStatus === "encontrado"  && <><Icons.CheckCircle /> Cadastro encontrado!</>}
+                  {loadingStatus === "carregando"  && <>Carregando seus dados...</>}
+                  {loadingStatus === "idle"        && <>Continuar <Icons.ChevronRight /></>}
                 </Button>
+                {loadingStatus === "encontrado" && (
+                  <div className="found-banner">
+                    <Icons.CheckCircle /> Cadastro localizado com sucesso. Carregando informações...
+                  </div>
+                )}
               </CardBody>
             </Card>
           )}
