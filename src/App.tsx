@@ -427,7 +427,7 @@ export default function Page() {
                 {/* Veículo */}
                 <div>
                   <Input label="Modelo Veículo" required icon={<Icons.Car />}
-                    value={cadForm.watch("modelo_busca")} placeholder="Ex: escreva Captiva EV e aparecerão os modelos para escolher"
+                    value={cadForm.watch("modelo_busca")} placeholder="Ex: Captiva EV"
                     onChange={e => cadForm.setValue("modelo_busca", e.target.value)} />
                 </div>
                 <div className="grid-2">
