@@ -723,7 +723,9 @@ export default function Page() {
                       {[...new Map(horariosList.map((h: any) => {
                         const hora = typeof h === "string" ? h : h.horario;
                         return [hora, hora];
-                      })).values()].map((hora: string) => {
+                      })).values()]
+                        .filter((hora: string) => hora.endsWith(":00"))
+                        .map((hora: string) => {
                         const sel = horForm.watch("hora") === hora;
                         return (
                           <button
