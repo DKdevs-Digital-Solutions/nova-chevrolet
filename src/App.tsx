@@ -366,7 +366,7 @@ export default function Page() {
 <header className="topbar">
   <div className="topbar-brand">
     <div className="topbar-text">
-      <img src="/icons/logo.svg" alt="Nova Chevrolet" />
+      <img src="/icons/logo.png" alt="Nova Chevrolet" />
       <span className="topbar-tag">Agendamento Online</span>
     </div>
   </div>
