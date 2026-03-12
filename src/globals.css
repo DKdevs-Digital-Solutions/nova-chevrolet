@@ -79,7 +79,7 @@ button, input, select, textarea { font-family: inherit; }
 }
 .topbar-brand { display: flex; align-items: center; justify-content: center; }
 .topbar-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
-.topbar-text img { display: block; margin-left: 20px; width: auto; height: 25px; }
+.topbar-text img { display: block; margin-left: 10px; width: auto; height: 25px; }
 .topbar-tag {
   display: block; margin-top: 0; 
   font-size: 15px; line-height: 1; color: var(--text-3); font-weight: 500; letter-spacing: 0;
