@@ -465,7 +465,7 @@ export default function Page() {
                   <Input label="Modelo" placeholder="Ano Mod" inputMode="numeric"
                     value={cadForm.watch("ano_mod")} onChange={e => cadForm.setValue("ano_mod", onlyDigits(e.target.value).slice(0, 4))} />
                   <div>
-                    <Input label="Placa" placeholder="Placa"
+                    <Input label="Placa" required placeholder="Placa"
                       value={cadForm.watch("placa")} onChange={e => cadForm.setValue("placa", e.target.value.toUpperCase())} />
                     <p className="field-hint" style={{ marginTop: 4 }}>Somente letras e números (Ex: AAA1111)</p>
                   </div>
