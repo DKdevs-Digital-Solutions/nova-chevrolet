@@ -143,10 +143,11 @@ export default function Page() {
   /* Queries */
   const lojasQ = useQuery({ queryKey: ["lojas"], queryFn: () => apiGet("/api/mapsis/get_lojas"), staleTime: 600000 });
   const servicosQ = useQuery({ queryKey: ["servicos"], queryFn: () => apiGet("/api/mapsis/get_servicos"), staleTime: 600000 });
+  const lojaFormValue = agForm.watch("id_loja_mapsis");
   const consultoresQ = useQuery({
-    queryKey: ["consultores", idLoja],
-    queryFn: () => apiGet(`/api/mapsis/get_consultores?${qs({ id_loja_mapsis: idLoja })}`),
-    enabled: step === "agendamento" && !!idLoja,
+    queryKey: ["consultores", lojaFormValue],
+    queryFn: () => apiGet(`/api/mapsis/get_consultores?${qs({ id_loja_mapsis: lojaFormValue })}`),
+    enabled: step === "agendamento" && !!lojaFormValue,
     staleTime: 600000,
   });
   const horariosQ = useQuery({
@@ -736,7 +737,7 @@ export default function Page() {
                         })}
                       </div>
                     )}
-                    {!consultoresQ.isFetching && consultoresList.length === 0 && !consultoresQ.isError && agForm.watch("id_loja_mapsis") && (
+                    {!consultoresQ.isFetching && consultoresList.length === 0 && !consultoresQ.isError && consultoresQ.isFetched && agForm.watch("id_loja_mapsis") && (
                       <p className="field-hint" style={{ marginTop: 4 }}>Nenhum técnico cadastrado para esta oficina.</p>
                     )}
                   </div>
