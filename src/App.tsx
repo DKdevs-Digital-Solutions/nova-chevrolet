@@ -671,6 +671,8 @@ export default function Page() {
                     value={agForm.watch("id_servico_mapsis")}
                     onChange={e => {
                       agForm.setValue("id_servico_mapsis", e.target.value);
+                      // Reseta oficina, técnico, data e horário
+                      agForm.setValue("id_loja_mapsis", "");
                       setIdConsultor("");
                       horForm.setValue("hora", "");
                       horForm.setValue("data", "");
