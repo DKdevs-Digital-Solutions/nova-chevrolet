@@ -669,7 +669,16 @@ export default function Page() {
                 <div className="grid-2">
                   <Select label="Serviço a ser executado:" required
                     value={agForm.watch("id_servico_mapsis")}
-                    onChange={e => agForm.setValue("id_servico_mapsis", e.target.value)}>
+                    onChange={e => {
+                      agForm.setValue("id_servico_mapsis", e.target.value);
+                      setIdConsultor("");
+                      horForm.setValue("hora", "");
+                      horForm.setValue("data", "");
+                      setHoraAgenda("");
+                      setDataAgenda("");
+                      setIdServico("");
+                      setIdLoja("");
+                    }}>
                     <option value="">- Selecione -</option>
                     {servicos.map((s: any) => (
                       <option key={s.id_servico_mapsis ?? s.nome} value={s.id_servico_mapsis ?? ""}>{s.nome ?? "Serviço"}</option>
