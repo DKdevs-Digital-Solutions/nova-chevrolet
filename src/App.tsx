@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ZodError } from "zod";
@@ -85,6 +85,7 @@ function useInstallPrompt() {
 ══════════════════════════════════════ */
 export default function Page() {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { canInstall, install, dismiss } = useInstallPrompt();
 
   const [step, setStep] = useState<StepId>("doc");
@@ -680,6 +681,8 @@ export default function Page() {
                       setDataAgenda("");
                       setIdServico("");
                       setIdLoja("");
+                      // Limpa cache de consultores para forçar nova busca
+                      queryClient.removeQueries({ queryKey: ["consultores"] });
                     }}>
                     <option value="">- Selecione -</option>
                     {servicos.map((s: any) => (
