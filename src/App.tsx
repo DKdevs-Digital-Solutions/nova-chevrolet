@@ -143,13 +143,6 @@ export default function Page() {
   /* Queries */
   const lojasQ = useQuery({ queryKey: ["lojas"], queryFn: () => apiGet("/api/mapsis/get_lojas"), staleTime: 600000 });
   const servicosQ = useQuery({ queryKey: ["servicos"], queryFn: () => apiGet("/api/mapsis/get_servicos"), staleTime: 600000 });
-  const lojaFormValue = agForm.watch("id_loja_mapsis");
-  const consultoresQ = useQuery({
-    queryKey: ["consultores", lojaFormValue],
-    queryFn: () => apiGet(`/api/mapsis/get_consultores?${qs({ id_loja_mapsis: lojaFormValue })}`),
-    enabled: step === "agendamento" && !!lojaFormValue,
-    staleTime: 600000,
-  });
   const horariosQ = useQuery({
     queryKey: ["horarios", idLoja, idServico, dataAgenda, idVeiculo, idConsultor],
     queryFn: () => {
@@ -182,6 +175,13 @@ export default function Page() {
   const agForm = useForm<any>({
     resolver: zodResolver(atendimentoSchema),
     defaultValues: { id_loja_mapsis: "", id_servico_mapsis: "" }
+  });
+  const lojaFormValue = agForm.watch("id_loja_mapsis");
+  const consultoresQ = useQuery({
+    queryKey: ["consultores", lojaFormValue],
+    queryFn: () => apiGet(`/api/mapsis/get_consultores?${qs({ id_loja_mapsis: lojaFormValue })}`),
+    enabled: step === "agendamento" && !!lojaFormValue,
+    staleTime: 600000,
   });
   const horForm = useForm<any>({
     resolver: zodResolver(horarioSchema),
