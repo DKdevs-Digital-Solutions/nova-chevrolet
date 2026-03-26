@@ -505,3 +505,37 @@ button, input, select, textarea { font-family: inherit; }
 }
 .horario-chip:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
 .horario-chip.selected { border-color: var(--brand); background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(232,119,34,.3); }
+
+/* ── TECNICO GRID ── */
+.tecnico-grid {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;
+}
+.tecnico-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 14px; min-width: 88px; max-width: 110px;
+  border-radius: var(--r-md); border: 1.5px solid var(--border);
+  background: var(--surface-2); color: var(--text-1);
+  font-size: 12px; font-weight: 500; cursor: pointer; text-align: center;
+  transition: all .15s var(--ease); -webkit-tap-highlight-color: transparent;
+  line-height: 1.2;
+}
+.tecnico-chip:hover {
+  border-color: var(--brand); color: var(--brand); background: var(--brand-light);
+}
+.tecnico-chip.selected {
+  border-color: var(--brand); background: var(--brand); color: #fff;
+  box-shadow: 0 2px 8px rgba(232,119,34,.3);
+}
+.tecnico-avatar {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface-3); font-size: 14px; font-weight: 700;
+  transition: all .15s var(--ease);
+}
+.tecnico-chip.selected .tecnico-avatar {
+  background: rgba(255,255,255,.25); color: #fff;
+}
+.tecnico-chip:hover:not(.selected) .tecnico-avatar {
+  background: var(--brand-light);
+}
+.tecnico-nome { font-size: 11px; word-break: break-word; }

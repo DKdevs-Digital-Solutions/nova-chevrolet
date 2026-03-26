@@ -95,6 +95,7 @@ export default function Page() {
   const [dataAgenda, setDataAgenda] = useState("");
   const [horaAgenda, setHoraAgenda] = useState("");
   const [idVeiculo, setIdVeiculo] = useState("");
+  const [idConsultor, setIdConsultor] = useState(""); // "" = sem preferência
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<"idle" | "consultando" | "encontrado" | "carregando">("idle");
   const cardRef = useRef<HTMLDivElement>(null);
@@ -142,15 +143,25 @@ export default function Page() {
   /* Queries */
   const lojasQ = useQuery({ queryKey: ["lojas"], queryFn: () => apiGet("/api/mapsis/get_lojas"), staleTime: 600000 });
   const servicosQ = useQuery({ queryKey: ["servicos"], queryFn: () => apiGet("/api/mapsis/get_servicos"), staleTime: 600000 });
+  const consultoresQ = useQuery({
+    queryKey: ["consultores", idLoja],
+    queryFn: () => apiGet(`/api/mapsis/get_consultores?${qs({ id_loja_mapsis: idLoja })}`),
+    enabled: step === "agendamento" && !!idLoja,
+    staleTime: 600000,
+  });
   const horariosQ = useQuery({
-    queryKey: ["horarios", idLoja, idServico, dataAgenda, idVeiculo],
-    queryFn: () => apiGet(`/api/mapsis/get_agenda_horario_disponivel?${qs({
-      id_veiculo_mapsis: idVeiculo,
-      id_loja_mapsis: idLoja,
-      id_servico_mapsis: idServico,
-      data_agendamento: dataAgenda,
-      retorno_consultor: "0",
-    })}`),
+    queryKey: ["horarios", idLoja, idServico, dataAgenda, idVeiculo, idConsultor],
+    queryFn: () => {
+      const useConsultor = !!idConsultor;
+      return apiGet(`/api/mapsis/get_agenda_horario_disponivel?${qs({
+        id_veiculo_mapsis: idVeiculo,
+        id_loja_mapsis: idLoja,
+        id_servico_mapsis: idServico,
+        data_agendamento: dataAgenda,
+        retorno_consultor: useConsultor ? "1" : "0",
+        ...(useConsultor ? { id_consultor_mapsis: idConsultor } : {}),
+      })}`);
+    },
     enabled: step === "agendamento" && !!idLoja && !!idServico && !!dataAgenda && !!idVeiculo, retry: 0,
   });
 
@@ -287,6 +298,7 @@ export default function Page() {
       id_loja_mapsis: idLoja,
       id_servico_mapsis: idServico,
       id_veiculo_mapsis: idV,
+      ...(idConsultor ? { id_consultor: idConsultor } : {}),
       marca_veiculo: veiSel.marca ?? "Chevrolet",
       modelo_veiculo: veiSel.modelo_carro ?? veiSel.modelo ?? "",
       ano_fabricacao: veiSel.ano_fabricacao ?? "",
@@ -316,6 +328,10 @@ export default function Page() {
     });
     return filtradas.length > 0 ? filtradas : all; // fallback: mostra todas se filtro não bater
   }, [lojasQ.data]);
+  const consultoresList = useMemo(() => {
+    const c = consultoresQ.data?.consultores ?? consultoresQ.data?.Consultores ?? [];
+    return Array.isArray(c) ? c : [];
+  }, [consultoresQ.data]);
   const horariosList = useMemo(() => {
     const h = horariosQ.data?.horarios ?? horariosQ.data?.Horarios ?? [];
     return Array.isArray(h) ? h : [];
@@ -660,11 +676,71 @@ export default function Page() {
                   </Select>
                   <Select label="Oficina Desejada:" required
                     value={agForm.watch("id_loja_mapsis")}
-                    onChange={e => agForm.setValue("id_loja_mapsis", e.target.value)}>
+                    onChange={e => {
+                      agForm.setValue("id_loja_mapsis", e.target.value);
+                      setIdConsultor("");
+                      horForm.setValue("hora", "");
+                      setHoraAgenda("");
+                      setDataAgenda("");
+                      setIdLoja("");
+                    }}>
                     <option value="">- Selecione -</option>
                     {lojas.map((l: any) => { const lid = String(l.id_loja_mapsis ?? l.id ?? ""); const lnome = l.nome ?? l.nome_loja ?? lid; return <option key={lid} value={lid}>{lnome}</option>; })}
                   </Select>
                 </div>
+
+                {/* Seleção de Técnico/Mecânico */}
+                {agForm.watch("id_loja_mapsis") && (
+                  <div className="field">
+                    <label className="field-label">Técnico / Mecânico Preferido:</label>
+                    {consultoresQ.isFetching && (
+                      <p className="field-hint" style={{ marginTop: 4 }}>Carregando técnicos...</p>
+                    )}
+                    {!consultoresQ.isFetching && consultoresList.length > 0 && (
+                      <div className="tecnico-grid">
+                        {/* Opção sem preferência */}
+                        <button
+                          type="button"
+                          className={`tecnico-chip${idConsultor === "" ? " selected" : ""}`}
+                          onClick={() => {
+                            setIdConsultor("");
+                            horForm.setValue("hora", "");
+                            setHoraAgenda("");
+                            setDataAgenda("");
+                          }}
+                        >
+                          <span className="tecnico-avatar">?</span>
+                          <span className="tecnico-nome">Sem preferência</span>
+                        </button>
+                        {consultoresList.map((c: any) => {
+                          const cid = String(c.id_consultor_mapsis ?? "");
+                          const cnome = c.nome ?? c.nome_consultor ?? cid;
+                          const sel = idConsultor === cid;
+                          const initials = cnome.split(" ").slice(0,2).map((w: string) => w[0]?.toUpperCase() ?? "").join("");
+                          return (
+                            <button
+                              key={cid}
+                              type="button"
+                              className={`tecnico-chip${sel ? " selected" : ""}`}
+                              onClick={() => {
+                                setIdConsultor(cid);
+                                horForm.setValue("hora", "");
+                                setHoraAgenda("");
+                                setDataAgenda("");
+                              }}
+                            >
+                              <span className="tecnico-avatar">{initials}</span>
+                              <span className="tecnico-nome">{cnome}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {!consultoresQ.isFetching && consultoresList.length === 0 && !consultoresQ.isError && agForm.watch("id_loja_mapsis") && (
+                      <p className="field-hint" style={{ marginTop: 4 }}>Nenhum técnico cadastrado para esta oficina.</p>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid-2">
                   <div>
@@ -769,7 +845,7 @@ export default function Page() {
                 </div>
 
                 <p className="notice-text">
-                  Se tiver preferência por técnico, entre em contato com nossa central de atendimento: Agende seu próximo serviço você mesmo, acesse o link. São Paulo(11) 2090-1730 (Whatsapp Business). Endereços: Tatuapé Av.Condessa Elisabeth de Robiano, 2.640 / Santo Amaro Av. João Dias, 2300. Aguardamos sua presença e agradecemos por escolher a NOVA CHEVROLET.
+                  Agende seu próximo serviço você mesmo. São Paulo (11) 2090-1730 (Whatsapp Business). Endereços: Tatuapé – Av. Condessa Elisabeth de Robiano, 2.640 / Santo Amaro – Av. João Dias, 2300. Aguardamos sua presença e agradecemos por escolher a NOVA CHEVROLET.
                 </p>
 
                 <div className="action-row">
@@ -874,6 +950,15 @@ export default function Page() {
                       <span className="summary-key"><Icons.Clock /> Horário</span>
                       <span className="summary-val">{horaAgenda}</span>
                     </div>
+                    {idConsultor && (() => {
+                      const cons = consultoresList.find((c: any) => String(c.id_consultor_mapsis ?? "") === idConsultor);
+                      return cons ? (
+                        <div className="summary-row">
+                          <span className="summary-key"><Icons.Wrench /> Técnico</span>
+                          <span className="summary-val">{cons.nome ?? cons.nome_consultor ?? "—"}</span>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                   <div style={{ width: "100%" }}>
                     <Button variant="secondary" className="btn-full" onClick={() => window.location.reload()}>
