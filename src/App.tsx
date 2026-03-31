@@ -184,10 +184,66 @@ export default function Page() {
     enabled: step === "agendamento" && !!lojaFormValue,
     staleTime: 600000,
   });
+
+  /* ── cod_loja da loja selecionada (para get_boxes) ── */
+  const codLojaSelecionada = useMemo(() => {
+    if (!lojaFormValue) return "";
+    const all: any[] = lojasQ.data?.lojas ?? lojasQ.data?.Lojas ?? lojasQ.data?.loja ?? [];
+    const loja = all.find((l: any) => String(l.id_loja_mapsis ?? "") === lojaFormValue);
+    return String(loja?.cod_loja ?? "");
+  }, [lojaFormValue, lojasQ.data]);
+
+  /* ── Técnicos (boxes) ── */
+  const boxesQ = useQuery({
+    queryKey: ["boxes", codLojaSelecionada],
+    queryFn: () => apiGet(`/api/mapsis/get_boxes?${qs({ cod_loja: codLojaSelecionada })}`),
+    enabled: step === "agendamento" && !!codLojaSelecionada,
+    staleTime: 600000,
+  });
+  const tecnicosList = useMemo(() => {
+    const b: any[] = boxesQ.data?.boxes ?? boxesQ.data?.consultores ?? [];
+    if (!Array.isArray(b)) return [];
+    return b.filter((t: any) => {
+      const nome = (t.nome_produtivo ?? "").trim().toUpperCase();
+      return nome.length > 0 && !nome.includes("ENCAIXE");
+    });
+  }, [boxesQ.data]);
+
   const horForm = useForm<any>({
     resolver: zodResolver(horarioSchema),
     defaultValues: { data: "", hora: "" }
   });
+
+  /* ── Agendamentos do dia (para disponibilidade dos técnicos) ── */
+  const dataHorForm = horForm.watch("data");
+  const agendamentosQ = useQuery({
+    queryKey: ["agenda_dia", codLojaSelecionada, lojaFormValue, dataHorForm],
+    queryFn: () => apiGet(`/api/mapsis/get_lista_agendamentos?${qs({
+      data_inicio: dataHorForm,
+      data_fim: dataHorForm,
+      cod_loja: codLojaSelecionada,
+      id_loja_mapsis: lojaFormValue,
+    })}`),
+    enabled: step === "agendamento" && !!codLojaSelecionada && !!dataHorForm,
+    staleTime: 60000,
+  });
+  const agendamentosDia = useMemo(() => {
+    const a: any[] = agendamentosQ.data?.agendamentos ?? [];
+    return Array.isArray(a) ? a : [];
+  }, [agendamentosQ.data]);
+
+  /* Agrupa agendamentos por box (interno, para cruzar com técnico) */
+  const agendaPorBox = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const ag of agendamentosDia) {
+      const k = String(ag.box ?? "");
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(ag);
+    }
+    map.forEach(list => list.sort((a: any, b: any) => (a.horario ?? "").localeCompare(b.horario ?? "")));
+    return map;
+  }, [agendamentosDia]);
+
   const [condutor, setCondutor] = useState<"proprietario" | "outros">("proprietario");
   const [nomeOutro, setNomeOutro] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -753,6 +809,46 @@ export default function Page() {
                     )}
                     {!consultoresQ.isFetching && consultoresList.length === 0 && !consultoresQ.isError && consultoresQ.isFetched && agForm.watch("id_loja_mapsis") && (
                       <p className="field-hint" style={{ marginTop: 4 }}>Nenhum técnico cadastrado para esta oficina.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Lista de Técnicos (via boxes) ── */}
+                {agForm.watch("id_loja_mapsis") && (
+                  <div className="field">
+                    <label className="field-label">Técnicos da Oficina:</label>
+                    {boxesQ.isFetching && (
+                      <p className="field-hint" style={{ marginTop: 4 }}>Carregando técnicos...</p>
+                    )}
+                    {!boxesQ.isFetching && tecnicosList.length > 0 && (
+                      <div className="tecnico-grid">
+                        {tecnicosList.map((t: any) => {
+                          const nome = t.nome_produtivo ?? "";
+                          const initials = nome.split(" ").slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? "").join("");
+                          const agenda = agendaPorBox.get(String(t.box)) ?? [];
+                          return (
+                            <div key={t.id_box_mapsis} className="tecnico-chip" style={{ cursor: "default", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                              <span className="tecnico-avatar">{initials}</span>
+                              <span className="tecnico-nome">{nome}</span>
+                              {dataHorForm && agenda.length > 0 && (
+                                <div style={{ width: "100%", marginTop: 4, fontSize: 10, color: "var(--text-muted, #999)", lineHeight: 1.5 }}>
+                                  {agenda.map((ag: any, i: number) => (
+                                    <div key={i}>{ag.horario}–{ag.horario_fim} {ag.servico}</div>
+                                  ))}
+                                </div>
+                              )}
+                              {dataHorForm && agenda.length === 0 && (
+                                <div style={{ marginTop: 4, fontSize: 10, color: "var(--text-muted, #999)" }}>
+                                  Sem agendamento
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {!boxesQ.isFetching && tecnicosList.length === 0 && !boxesQ.isError && boxesQ.isFetched && (
+                      <p className="field-hint" style={{ marginTop: 4 }}>Nenhum técnico encontrado para esta oficina.</p>
                     )}
                   </div>
                 )}
