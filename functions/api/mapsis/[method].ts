@@ -12,6 +12,8 @@ const ALLOWLIST = new Set([
   "get_cliente",
   "set_cliente",
   "get_consultores",
+  "get_boxes",
+  "get_lista_agendamentos",
   "get_agenda_horario_disponivel",
   "set_agendamento",
 ])
