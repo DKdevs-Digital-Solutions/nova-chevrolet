@@ -97,6 +97,7 @@ export default function Page() {
   const [horaAgenda, setHoraAgenda] = useState("");
   const [idVeiculo, setIdVeiculo] = useState("");
   const [idConsultor, setIdConsultor] = useState(""); // "" = sem preferência
+  const [idBoxMapsis, setIdBoxMapsis] = useState(""); // box selecionado via técnicos
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<"idle" | "consultando" | "encontrado" | "carregando">("idle");
   const cardRef = useRef<HTMLDivElement>(null);
@@ -145,7 +146,7 @@ export default function Page() {
   const lojasQ = useQuery({ queryKey: ["lojas"], queryFn: () => apiGet("/api/mapsis/get_lojas"), staleTime: 600000 });
   const servicosQ = useQuery({ queryKey: ["servicos"], queryFn: () => apiGet("/api/mapsis/get_servicos"), staleTime: 600000 });
   const horariosQ = useQuery({
-    queryKey: ["horarios", idLoja, idServico, dataAgenda, idVeiculo, idConsultor],
+    queryKey: ["horarios", idLoja, idServico, dataAgenda, idVeiculo, idConsultor, idBoxMapsis],
     queryFn: () => {
       const useConsultor = !!idConsultor;
       return apiGet(`/api/mapsis/get_agenda_horario_disponivel?${qs({
@@ -155,6 +156,7 @@ export default function Page() {
         data_agendamento: dataAgenda,
         retorno_consultor: useConsultor ? "1" : "0",
         ...(useConsultor ? { id_consultor_mapsis: idConsultor } : {}),
+        ...(idBoxMapsis ? { id_box_mapsis: idBoxMapsis } : {}),
       })}`);
     },
     enabled: step === "agendamento" && !!idLoja && !!idServico && !!dataAgenda && !!idVeiculo, retry: 0,
@@ -205,7 +207,7 @@ export default function Page() {
     if (!Array.isArray(b)) return [];
     return b.filter((t: any) => {
       const nome = (t.nome_produtivo ?? "").trim().toUpperCase();
-      return nome.length > 0 && !nome.includes("ENCAIXE");
+      return nome.length > 0 && !nome.includes("ENCAIXE") && !nome.includes("RECALL");
     });
   }, [boxesQ.data]);
 
@@ -357,6 +359,7 @@ export default function Page() {
       id_servico_mapsis: idServico,
       id_veiculo_mapsis: idV,
       ...(idConsultor ? { id_consultor: idConsultor } : {}),
+      ...(idBoxMapsis ? { id_box: idBoxMapsis } : {}),
       marca_veiculo: veiSel.marca ?? "Chevrolet",
       modelo_veiculo: veiSel.modelo_carro ?? veiSel.modelo ?? "",
       ano_fabricacao: veiSel.ano_fabricacao ?? "",
@@ -731,6 +734,7 @@ export default function Page() {
                       // Reseta oficina, técnico, data e horário
                       agForm.setValue("id_loja_mapsis", "");
                       setIdConsultor("");
+                      setIdBoxMapsis("");
                       horForm.setValue("hora", "");
                       horForm.setValue("data", "");
                       setHoraAgenda("");
@@ -750,6 +754,7 @@ export default function Page() {
                     onChange={e => {
                       agForm.setValue("id_loja_mapsis", e.target.value);
                       setIdConsultor("");
+                      setIdBoxMapsis("");
                       horForm.setValue("hora", "");
                       setHoraAgenda("");
                       setDataAgenda("");
@@ -760,20 +765,21 @@ export default function Page() {
                   </Select>
                 </div>
 
-                {/* Seleção de Técnico/Mecânico */}
+                {/* ── Técnicos da Oficina (via boxes) ── */}
                 {agForm.watch("id_loja_mapsis") && (
                   <div className="field">
-                    <label className="field-label">Técnico / Mecânico Preferido:</label>
-                    {consultoresQ.isFetching && (
+                    <label className="field-label">Técnico / Mecânico:</label>
+                    {boxesQ.isFetching && (
                       <p className="field-hint" style={{ marginTop: 4 }}>Carregando técnicos...</p>
                     )}
-                    {!consultoresQ.isFetching && consultoresList.length > 0 && (
+                    {!boxesQ.isFetching && tecnicosList.length > 0 && (
                       <div className="tecnico-grid">
-                        {/* Opção sem preferência */}
+                        {/* Sem preferência */}
                         <button
                           type="button"
-                          className={`tecnico-chip${idConsultor === "" ? " selected" : ""}`}
+                          className={`tecnico-chip${idBoxMapsis === "" ? " selected" : ""}`}
                           onClick={() => {
+                            setIdBoxMapsis("");
                             setIdConsultor("");
                             horForm.setValue("hora", "");
                             setHoraAgenda("");
@@ -783,66 +789,27 @@ export default function Page() {
                           <span className="tecnico-avatar">?</span>
                           <span className="tecnico-nome">Sem preferência</span>
                         </button>
-                        {consultoresList.map((c: any) => {
-                          const cid = String(c.id_consultor_mapsis ?? "");
-                          const cnome = c.nome ?? c.nome_consultor ?? cid;
-                          const sel = idConsultor === cid;
-                          const initials = cnome.split(" ").slice(0,2).map((w: string) => w[0]?.toUpperCase() ?? "").join("");
+                        {tecnicosList.map((t: any) => {
+                          const nome = t.nome_produtivo ?? "";
+                          const boxId = String(t.id_box_mapsis ?? "");
+                          const sel = idBoxMapsis === boxId;
+                          const initials = nome.split(" ").slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? "").join("");
                           return (
                             <button
-                              key={cid}
+                              key={boxId}
                               type="button"
                               className={`tecnico-chip${sel ? " selected" : ""}`}
                               onClick={() => {
-                                setIdConsultor(cid);
+                                setIdBoxMapsis(boxId);
+                                setIdConsultor("");
                                 horForm.setValue("hora", "");
                                 setHoraAgenda("");
                                 setDataAgenda("");
                               }}
                             >
                               <span className="tecnico-avatar">{initials}</span>
-                              <span className="tecnico-nome">{cnome}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {!consultoresQ.isFetching && consultoresList.length === 0 && !consultoresQ.isError && consultoresQ.isFetched && agForm.watch("id_loja_mapsis") && (
-                      <p className="field-hint" style={{ marginTop: 4 }}>Nenhum técnico cadastrado para esta oficina.</p>
-                    )}
-                  </div>
-                )}
-
-                {/* ── Lista de Técnicos (via boxes) ── */}
-                {agForm.watch("id_loja_mapsis") && (
-                  <div className="field">
-                    <label className="field-label">Técnicos da Oficina:</label>
-                    {boxesQ.isFetching && (
-                      <p className="field-hint" style={{ marginTop: 4 }}>Carregando técnicos...</p>
-                    )}
-                    {!boxesQ.isFetching && tecnicosList.length > 0 && (
-                      <div className="tecnico-grid">
-                        {tecnicosList.map((t: any) => {
-                          const nome = t.nome_produtivo ?? "";
-                          const initials = nome.split(" ").slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? "").join("");
-                          const agenda = agendaPorBox.get(String(t.box)) ?? [];
-                          return (
-                            <div key={t.id_box_mapsis} className="tecnico-chip" style={{ cursor: "default", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                              <span className="tecnico-avatar">{initials}</span>
                               <span className="tecnico-nome">{nome}</span>
-                              {dataHorForm && agenda.length > 0 && (
-                                <div style={{ width: "100%", marginTop: 4, fontSize: 10, color: "var(--text-muted, #999)", lineHeight: 1.5 }}>
-                                  {agenda.map((ag: any, i: number) => (
-                                    <div key={i}>{ag.horario}–{ag.horario_fim} {ag.servico}</div>
-                                  ))}
-                                </div>
-                              )}
-                              {dataHorForm && agenda.length === 0 && (
-                                <div style={{ marginTop: 4, fontSize: 10, color: "var(--text-muted, #999)" }}>
-                                  Sem agendamento
-                                </div>
-                              )}
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
@@ -1061,12 +1028,12 @@ export default function Page() {
                       <span className="summary-key"><Icons.Clock /> Horário</span>
                       <span className="summary-val">{horaAgenda}</span>
                     </div>
-                    {idConsultor && (() => {
-                      const cons = consultoresList.find((c: any) => String(c.id_consultor_mapsis ?? "") === idConsultor);
-                      return cons ? (
+                    {idBoxMapsis && (() => {
+                      const tec = tecnicosList.find((t: any) => String(t.id_box_mapsis ?? "") === idBoxMapsis);
+                      return tec ? (
                         <div className="summary-row">
                           <span className="summary-key"><Icons.Wrench /> Técnico</span>
-                          <span className="summary-val">{cons.nome ?? cons.nome_consultor ?? "—"}</span>
+                          <span className="summary-val">{tec.nome_produtivo ?? "—"}</span>
                         </div>
                       ) : null;
                     })()}
