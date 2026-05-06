@@ -371,6 +371,10 @@ export default function Page() {
       hora_agendamento: vHor.hora,
       observacao: observacoes,
       status_agendamento: "P",
+      CalledFrom: "PWA_NOVA_CHEVROLET",
+      origem: "SITE",
+      origem_lead: "INTERNET",
+      como_chegou: "LANDING PAGE"
     })}`);
     const e = getErroApi(r); if (e) throw new Error(e);
     setDataAgenda(vHor.data); setHoraAgenda(vHor.hora);
