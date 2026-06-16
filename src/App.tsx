@@ -374,7 +374,7 @@ export default function Page() {
       CalledFrom: "PWA_NOVA_CHEVROLET",
       origem: "SITE",
       origem_lead: "INTERNET",
-      como_chegou: "LANDING PAGE"
+      como_chegou: "MapSis - Agend. On-line"
     })}`);
     const e = getErroApi(r); if (e) throw new Error(e);
     setDataAgenda(vHor.data); setHoraAgenda(vHor.hora);
